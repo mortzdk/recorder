@@ -1,0 +1,17 @@
+# Ignore swap files
+*.swp
+*.sqo
+
+# Ignore nodejs modules
+node_modules
+
+# Ignore sass cache
+.sass-cache
+
+# Ignore tests
+app/test/js/
+app/test/css/
+app/test/templates/
+
+# Ignore vendors
+app/vendors

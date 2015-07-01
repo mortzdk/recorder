@@ -1,0 +1,30 @@
+{
+	"attr-bans" : [],
+	"attr-name-style" : "dash",
+	"attr-no-dup" : true,
+	"attr-no-unsafe-char" : true,
+	"attr-quote-style" : "double",
+	"attr-req-value" : true,
+	"doctype-first" : true,
+	"doctype-html5" : false,
+	"href-style" : false,
+	"html-req-lang" : false,
+	"id-class-no-ad" : false,
+	"id-class-style" : false,
+	"id-no-dup" : true,
+	"img-req-alt" : true,
+	"img-req-src" : true,
+	"indent-style" : false,
+	"indent-width" : false,
+	"label-req-for" : true,
+	"line-end-style" : "lf",
+	"spec-char-escape" : true,
+	"tag-bans" : [
+		"applet", "basefont", "center", "dir", "font", "isindex", "menu", "s", 
+		"strike", "u", "blink", "acronym", "bgsound", "frame", "frameset", 
+		"noframes", "hgroup", "listing", "nextid", "noembed", "plaintext", 
+		"xmp", "big", "marquee", "multicol", "nobr", "spacer", "tt"
+	],
+	"tag-name-lowercase" : true,
+	"tag-self-close" : false
+}

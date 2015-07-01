@@ -1,0 +1,20 @@
+{
+	"name": "grunt-application-template",
+	"version": "0.0.1",
+	"private": true,
+	"homepage": "http://www.mortz.dk",	
+	"main": [
+		"app/index.html",
+		"app/dist/js/scripts.js",
+		"app/dist/css/style.css",
+		"app/dist/templates/templates.css"
+	],
+	"dependencies" : {
+	},
+	"devDependencies": {
+		"qunit" : "1.18.0",
+		"blanket" : "1.1.7"
+	},
+	"exportsOverride" : {
+	}
+}

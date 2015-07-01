@@ -1,0 +1,1 @@
+{"version":3,"sources":["style.css"],"names":[],"mappings":"AAAA;CACC,mBAAmB;CACnB,cAAc;CACd","file":"style.css","sourcesContent":[".cursor {\n\tposition: absolute;\n\tdisplay: none;\n}\n\n\n"]}

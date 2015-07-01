@@ -1,0 +1,18 @@
+{
+	"browsers" : [
+		{
+			"phantomjs" : {
+				"port" : 4000 
+			},
+			"chrome" : {
+				"port" : 4001 
+			}, 
+			"firefox" : {
+				"port" : 4002 
+			},
+			"ie" : {
+				"port" : 4003
+			}
+		}
+	]
+}

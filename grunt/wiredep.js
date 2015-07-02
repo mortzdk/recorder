@@ -58,18 +58,6 @@ module.exports = function (grunt) {
 			src : [
 				"<%= test %>/index.html"
 			]
-		},
-		prod : {
-			options : {
-				overrides: {
-					"jQuery" : {
-						"main" : "jquery.min.js"
-					}
-				}
-			},
-			src : [
-				"<%= app %>/index.html"
-			],
 		}
 	});
 

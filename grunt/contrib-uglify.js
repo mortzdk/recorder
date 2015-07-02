@@ -14,8 +14,8 @@ module.exports = function (grunt) {
 				sourceMap : true
 			},
 			files: {
-				"<%= testjs %>/scripts.js" : [
-					"<%= testjs %>/scripts.js"
+				"<%= testjs %>/<%= pkg.name %>.js" : [
+					"<%= testjs %>/<%= pkg.name %>.js"
 				]
 			}
 		},
@@ -32,8 +32,8 @@ module.exports = function (grunt) {
 				compress : true
 			},
 			files: {
-				"<%= dist %>/js/scripts.min.js" : [
-					"<%= testjs %>/scripts.js"
+				"<%= dist %>/js/<%= pkg.name %>.min.js" : [
+					"<%= testjs %>/<%= pkg.name %>.js"
 				]
 			}
 		}

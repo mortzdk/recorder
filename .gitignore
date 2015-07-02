@@ -13,5 +13,6 @@ app/test/js/
 app/test/css/
 app/test/templates/
 
-# Ignore vendors
+# Ignore vendors and distribution files
 app/vendors
+app/dist

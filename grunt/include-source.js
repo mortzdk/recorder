@@ -16,7 +16,8 @@ module.exports = function (grunt) {
 					test: "<script type=\"text/javascript\" " + 
 						"src=\"{filePath}\"></script>"
 				}
-			}
+			},
+			ordering : "top-down"
 		},
 		dev : {
 			options : {

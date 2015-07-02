@@ -10,7 +10,7 @@ module.exports = function (grunt) {
 			"<%= htmls %>",
 			"<%= templates %>"
 		]), 
-		tasks: "<%= taskdev %>",
+		tasks: ["__dev__"],
 		options: {
 			spawn: false,
 			dateFormat: function (time) {

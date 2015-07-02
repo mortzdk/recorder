@@ -2,8 +2,6 @@ module.exports = function (grunt) {
 	"use strict";
 
 	var dev = [
-			"clean:dev", 
-
 			// Bower
 			"bower:install",
 
@@ -126,6 +124,10 @@ module.exports = function (grunt) {
 		]);
 	});
 
+	grunt.registerTask("__dev__", function () {
+		grunt.task.run(["clear:dev"].concat(dev));
+	});
+
 	// Unused for now
 	//	grunt.loadNpmTasks("grunt-bootlint");
 	//	grunt.loadNpmTasks("grunt-favicon");
@@ -138,13 +140,10 @@ module.exports = function (grunt) {
 	// "grunt clear" or "grunt clean" clears all temporary and production files
 	grunt.registerTask("clear", clear);
 
-	// "grunt dev" or "grunt development" runs development task
-	grunt.registerTask("development", function () {
-		grunt.task.run(["clear:dev"].concat(dev));
-	});
-	grunt.registerTask("dev", function () {
-		grunt.task.run(["clear:dev"].concat(dev));
-	});
+	// "grunt dev", "grunt test" or "grunt development" runs development task
+	grunt.registerTask("development", "__dev__");
+	grunt.registerTask("dev", "__dev__");
+	grunt.registerTask("test", "__dev__");
 
 	// "grunt prod", "grunt production", "grunt dist" runs production task
 	grunt.registerTask("production", prod);
@@ -152,5 +151,5 @@ module.exports = function (grunt) {
 	grunt.registerTask("dist", prod);
 
 	// "grunt" or "grunt watch" runs watch
-	grunt.registerTask("default", "watch");
+	grunt.registerTask("default", ["clear", "watch"]);
 };

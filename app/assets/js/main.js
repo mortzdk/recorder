@@ -6,9 +6,9 @@ require([
 	var recorder = new Recorder();
 
 	window.addEventListener("load", function () {
-		document.getElementById("record").addEventListener(
+		document.getElementById("start").addEventListener(
 			"click", 
-			recorder.record,
+			recorder.start,
 			false
 		);
 

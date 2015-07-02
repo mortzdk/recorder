@@ -1,13 +1,13 @@
 {
-	"name": "grunt-application-template",
+	"name": "Recorder",
 	"version": "0.0.1",
-	"description": "Template for new application using Grunt",
+	"description": "Library that records the interaction of the user",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/mortzdk/grunt-application-template"
+		"url": "https://github.com/mortzdk/recorder"
 	},
 	"bugs": {
-		"url": "https://github.com/mortzdk/grunt-application-template/issues"
+		"url": "https://github.com/mortzdk/recorder"
 	},
 	"author": {
 		"name": "Morten Houmøller Nygaard",

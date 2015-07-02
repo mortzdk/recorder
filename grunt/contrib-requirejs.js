@@ -17,7 +17,7 @@ module.exports = function (grunt) {
 				useStrict: true,
 				skipModuleInsertion: true,
 				findNestedDependencies: true,
-				out : "<%= testjs %>/scripts.js",
+				out : "<%= testjs %>/<%= pkg.name %>.js",
 				onModuleBundleComplete: function(data) {
 					var fs = require("fs"),
 					amdclean = require("amdclean"),
@@ -44,11 +44,12 @@ module.exports = function (grunt) {
 							createAnonymousAMDModule: true,
 							wrap : {
 								start : ";(function (window, document, " + 
-										  "location, navigator, undefined) {" +
+										  "location, navigator, undefined, " + 
+										  "docElem) {" +
 										  "\n\t\"use strict\";\n\n",
 								end : "\n}(window, window.document, " + 
 										"window.location, window.navigator, " + 
-										"void(0)));"
+										"void(0), document.documentElement));"
 							}
 						})
 					);

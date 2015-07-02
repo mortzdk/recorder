@@ -1,3 +1,4 @@
+/* global docElem:false */
 require([], function () {
 	"use strict";
 
@@ -77,8 +78,7 @@ require([], function () {
 							function () { e.returnValue = false; };
 						e.stopPropagation = e.stopPropagation || 
 							function () { e.cancelBubble = true; };
-						e.target = e.target || e.srcElement || 
-							document.documentElement;
+						e.target = e.target || e.srcElement || docElem;
 						e.currentTarget = e.currentTarget || self;
 						e.timeStamp = e.timeStamp || (new Date()).getTime();
 						listener.call(self, e);

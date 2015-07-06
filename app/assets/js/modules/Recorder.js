@@ -17,6 +17,8 @@ define([
 	    raf,
 		target,
 		oldTarget,
+		selection,
+		range,
 		rec = new RecorderEvent(),
 			
 		// Enumerate Events
@@ -25,7 +27,7 @@ define([
 		MOUSEUP = 2,
 		MOUSEMOVE = 3,
 //		SCROLL = 4,
-//
+
 		// Helper functions
 		getTarget = function () {
 			window.scrollTo(queue[frame][3], queue[frame][4]);
@@ -41,7 +43,9 @@ define([
 			return target;
 		},
 		isDecendant = function (parent, child) {
+			console.log(4);
 			var node = child.parentNode;
+				console.log(5);
 			while ( !!node ) {
 				if (node === parent) {
 					return true;
@@ -52,15 +56,65 @@ define([
 		},
 
 		// Event handlers
+		scroll = function () {
+			if ( !!window.scrollX && !!window.scrollY ) {
+				sX = window.scrollX;
+				sY = window.scrollY;
+			} else if ( !!window.pageXOffset && !!window.pageYOffset ) {
+				sX = window.pageXOffset;
+				sY = window.pageYOffset;
+			} else {
+				sX = docElem.scrollLeft || document.body.scrollLeft;
+				sY = docElem.scrollTop || document.body.scrollTop;
+			}
+			return {"x" : sX, "y" : sY};
+		},
 		click = function () {
 			queue.push([CLICK, mX, mY, sX, sY]);
 		}, 
 		mouseup = function () {
-			if ( !!window.getSelection ) {
-				console.log("GET");
-				console.log(window.getSelection());
+			var scr = scroll.call(),
+			    aRect,
+			    aX = scr.x,
+			    aY = scr.y,
+			    aO,
+			    fRect,
+			    fX = scr.x,
+			    fY = scr.y,
+			    fO;
+
+			if ( !!window.getSelection || !!document.getSelection ) {
+				selection = (window.getSelection || document.getSelection)
+					.call();
+
+				if ( !selection.anchorNode || !selection.focusNode ) {
+					return;
+				}
+
+				aRect = selection.anchorNode.parentNode.getBoundingClientRect();
+				fRect = selection.focusNode.parentNode.getBoundingClientRect();
+
+				aX += aRect.left;
+				aY += aRect.top;
+				aO = selection.anchorOffset;
+
+				fX += fRect.left;
+				fY += fRect.top;
+				fO = selection.focusOffset;
+
+				if (fO > aO) {
+					queue.push([MOUSEUP, aX, aY, aO, fX, fY, fO]);
+				} else {
+					queue.push([MOUSEUP, fX, fY, fO, aX, aY, aO]);
+				}
 			} else if ( !!document.selection ) {
-				console.log(document.selection.createRange());
+				range = window.selection.createRange();
+
+				aRect = range.getBoundingClientRect();
+
+				console.log(aRect);
+
+				//queue.push([MOUSEUP, aX, aY, fX, fY]);
 			} else {
 				throw new Error("Browser does not support selection");
 			}
@@ -83,6 +137,26 @@ define([
 
 			switch (queue[frame][0]) {
 				case MOUSEUP:
+					if ( !!window.getSelection || !!document.getSelection ) {
+						range = document.createRange();
+						range.setStart(
+							document.elementFromPoint(
+								queue[frame][1], queue[frame][2]
+							).firstChild,
+							queue[frame][3]
+						);
+						range.setEnd(
+							document.elementFromPoint(
+								queue[frame][4], queue[frame][5]
+							).firstChild,
+							queue[frame][6]
+						);
+
+						selection = (window.getSelection || 
+							document.getSelection).call();
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
 					break;
 				case MOUSEMOVE:
 					// Set position of fake cursor
@@ -94,6 +168,18 @@ define([
 					target = getTarget();
 					if ( !target ) {
 						break;
+					}
+
+					cursor.src = "dist/images/cursors/default.png";
+					if (target.nodeName === "A") {
+						// ANCHOR Element
+						cursor.src = "dist/images/cursors/pointer.png";
+					} else if ( target.nodeType === 3 || 
+						 (target.childNodes.length === 1 && 
+						  target.childNodes[0].nodeType === 3 &&
+						  target.nodeValue !== "") ) {
+						// TEXT Element
+						cursor.src = "dist/images/cursors/text.png";
 					}
 
 					// If target has changed
@@ -130,7 +216,7 @@ define([
 	function Recorder() {
 
 		window.addEventListener("mousemove", function (event) {
-			if ( !!event.pageX || !!event.pageY ) {
+			if ( !!event.pageX && !!event.pageY ) {
 				mX = event.pageX;
 				mY = event.pageY;
 			} else {
@@ -143,24 +229,15 @@ define([
 			}
 		}, false);
 
-		window.addEventListener("scroll", function () {
-			if ( !!window.pageXOffset && !!window.pageYOffset ) {
-				sX = window.pageXOffset;
-				sY = window.pageYOffset;
-			} else {
-				sX = docElem.scrollLeft || document.body.scrollLeft;
-				sY = docElem.scrollTop || document.body.scrollTop;
-			}
-		}, false);
+		window.addEventListener("scroll", scroll, false);
 
 		// Create cursor and append to DOM
 		cursor = document.createElement("img");
 		cursor.style.position = "absolute";
 		cursor.style.display = "none";
-		cursor.src = "dist/images/cursor.png";
+		cursor.src = "dist/images/cursors/text.png";
 		cursor.className = "cursor";
 		document.body.insertBefore(cursor, document.body.lastChild.nextSibling);
-
 	}
 
 	Recorder.prototype.start = function () {
@@ -178,13 +255,12 @@ define([
 		// Reset array
 		queue.length = 0;
 
+		cursor.style.display = "none";
+
 		window.addEventListener("click", click, false);
 		window.addEventListener("mouseup", mouseup, false);
 
 		raf = window.requestAnimationFrame(move);
-
-		cursor.style.display = "none";
-
 	};
 	
 	Recorder.prototype.stop = function () {
@@ -199,7 +275,8 @@ define([
 			raf = undefined;
 		}
 
-		window.removeEventListener("click", click);
+		window.removeEventListener("click", click, false);
+		window.removeEventListener("mouseup", click, false);
 	};
 
 	Recorder.prototype.play = function () {
@@ -217,6 +294,7 @@ define([
 //			"/8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg==')," + 
 //			"url('images/blank.cur')," + 
 //			"none !important";
+//			
 			raf = window.requestAnimationFrame(play);
 		}
 	};

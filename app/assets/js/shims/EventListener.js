@@ -6,8 +6,8 @@ require([], function () {
 	 * @license addEventListener polyfill 1.0 / Eirik Backer / MIT Licence
 	 * https://gist.github.com/2864711/946225eb3822c203e8d6218095d888aac5e1748e
 	 */
-	if ((!window.addEventListener || !window.removeEventListener) && 
-			window.attachEvent && window.detachEvent) {
+	if ( (!window.addEventListener || !window.removeEventListener) && 
+		 (!!window.attachEvent && !!window.detachEvent) ) {
 
 		var listenersPropName = "x-ms-event-listeners";
 
@@ -29,7 +29,7 @@ require([], function () {
 			if (listeners) {
 				var lis;
 				var i = listeners.length-1;
-				while (i) {
+				while (i > -1) {
 					lis = listeners[i];
 					if (lis[0] === self) {
 						return lis[1];
@@ -108,8 +108,8 @@ require([], function () {
 		 */
 		var addListen = function (obj) {
 			var i = obj.length-1;
-			if (i) {
-				while (i) {
+			if (i > -1) {
+				while (i > -1) {
 					obj[i].addEventListener = addEvent;
 					obj[i].removeEventListener = removeEvent;
 					i -= 1;

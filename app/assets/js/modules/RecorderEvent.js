@@ -27,11 +27,6 @@ define([], function () {
 			throw new Error("Invalid node passed to fireEvent: " + node.id);
 		}
 
-console.log("FIRE");
-console.log(node);
-console.log(node.dispatchEvent);
-console.log(node.fireEvent);
-
 		if (node.dispatchEvent) {
 			// Different events have different event classes.
 			// If this switch statement can't map an eventName to an eventClass,

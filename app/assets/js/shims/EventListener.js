@@ -70,6 +70,10 @@ require([], function () {
 		var addEvent = function (type, listener /*, useCapture*/) {
 			if (isCallable(listener)) {
 				var self = this;
+
+				type = ("blur" === type) ? "focusout" : type;
+				type = ("focus" === type) ? "focusin" : type;
+				
 				self.attachEvent(
 					"on" + type,
 					setListener(self, listener, function (e) {

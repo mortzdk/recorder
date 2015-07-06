@@ -12,11 +12,11 @@ define([], function () {
 	 * @param {String} eventName The name of the event without the "on" 
 	 * (e.g., "focus")
 	 */
-	RecorderEvent.prototype.fire = function(node, eventName) {
+	RecorderEvent.prototype.fire = function(node, eventName, options) {
 
 		// Make sure we use the ownerDocument from the provided node to avoid 
 		// cross-window problems
-		var doc, event, bubbles, eventClass="";
+		var doc, event, bubbles, eventClass = "", prop;
 
 		if (node && node.ownerDocument) {
 			doc = node.ownerDocument;
@@ -24,8 +24,10 @@ define([], function () {
 			// the node may be the document itself, nodeType 9 = DOCUMENT_NODE
 			doc = node;
 		} else {
-			throw new Error("Invalid node passed to fireEvent: " + node.id);
+			throw new Error("Invalid node passed to fireEvent: " + node);
 		}
+
+		options = options || {};
 
 		if (node.dispatchEvent) {
 			// Different events have different event classes.
@@ -49,25 +51,43 @@ define([], function () {
 				case "select":
 					eventClass = "HTMLEvents";
 					break;
+				case "keydown":
+				case "keyup":
+				case "keypress":
+					eventClass = "Events";
+					break;
 				default:
 					throw "fireEvent: Couldn't find an event class for " + 
 						"event '" + eventName + "'.";
 			}
 
-			bubbles = eventName === "change" ? false : true;
+			bubbles = (eventName === "change") ? false : true;
 
 			event = doc.createEvent(eventClass);
 			// All events created as bubbling and cancelable.
 			event.initEvent(eventName, bubbles, true); 
+
+			for (prop in options) {
+				if (Object.prototype.hasOwnProperty.call(options, prop)) {
+					event[prop] = options[prop];
+				}
+			}
+
 			// Allow detection of synthetic events
 			event.synthetic = true; 
-
 
 			// The second parameter says go ahead with the default action
 			node.dispatchEvent(event, true);
 		} else if (node.fireEvent) {
 			// IE-old school style
 			event = doc.createEventObject();
+
+			for (prop in options) {
+				if (Object.prototype.hasOwnProperty.call(options, prop)) {
+					event[prop] = options[prop];
+				}
+			}
+
 			// Allow detection of synthetic events
 			event.synthetic = true;
 

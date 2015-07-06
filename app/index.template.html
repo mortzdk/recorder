@@ -39,6 +39,8 @@
 
 		<a href="http://www.mortz.dk">LINK</a>
 
+		<textarea rows="3" cols="80" id="textarea"></textarea>
+
 		<!-- include: "type": "js", "files": "dist/js/**/*.js" -->
 		<!-- /include -->
 		<script>
@@ -61,6 +63,14 @@
 					function(){document.body.style.backgroundColor="white";}, 
 					1000
 				);
+			}, 
+			false
+		);
+		document.getElementById("textarea").addEventListener(
+			"copy", 
+			function (event) {
+				console.log(event);
+				console.log(event.clipboardData.getData('text/plain'));
 			}, 
 			false
 		);

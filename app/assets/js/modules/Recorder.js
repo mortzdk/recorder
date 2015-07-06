@@ -13,13 +13,29 @@ define([
 		frame = 0,
 		playing = false,
 	    queue = [],
+		hiddenInput,
+		hiddenDiv,
 		cursor,
 	    raf,
 		target,
 		oldTarget,
 		selection,
 		range,
+
+		// Constants
+		objectPrototype = Object.prototype,
+		number = "Number",
 		rec = new RecorderEvent(),
+		isIE = (function () {
+			var result = false
+			
+			/* jshint ignore:start */
+			result = new Function("return/*@cc_on!@*/!1")() || 
+			( isNumber(document.documentMode) && document.documentMode <= 10 );
+			/* jshint ignore:end */
+
+			return result;
+		}()),
 			
 		// Enumerate Events
 		CLICK = 0,
@@ -27,6 +43,7 @@ define([
 		MOUSEUP = 2,
 		MOUSEMOVE = 3,
 //		SCROLL = 4,
+		PASTE = 5,
 
 		// Helper functions
 		getTarget = function () {
@@ -42,17 +59,32 @@ define([
 
 			return target;
 		},
-		isDecendant = function (parent, child) {
-			console.log(4);
-			var node = child.parentNode;
-				console.log(5);
+		isDecendant = function (_parent, _child) {
+			var node = _child.parentNode;
 			while ( !!node ) {
-				if (node === parent) {
+				if (node === _parent) {
 					return true;
 				}
 				node = node.parentNode;
 			}
 			return false;
+		},
+		isNumber = function (_arg) {
+			return typeof _arg === number.toLowerCase() || objectPrototype
+				.toString.call(_arg) === "[object " + number + "]";
+		},
+		setStyle = function (_elem, _props) {
+			var prop;
+			for (prop in _props) {
+				if (objectPrototype.hasOwnProperty.call(_props, prop)) {
+					_elem.style[prop] = _props[prop];
+				}
+			}
+		},
+		empty = function(_elem) {
+			while (_elem.hasChildNodes()) {
+				_elem.removeChild(_elem.childNodes[0]);
+			}
 		},
 
 		// Event handlers
@@ -72,6 +104,27 @@ define([
 		click = function () {
 			queue.push([CLICK, mX, mY, sX, sY]);
 		}, 
+		paste = function (event) {
+			if (isIE) {
+				empty(hiddenDiv);
+				setTimeout(function() {
+					empty(hiddenDiv);
+					hiddenInput.value = " ";
+					hiddenInput.focus().select() = " ";
+				}, 0);
+			} else {
+
+			}
+			void PASTE;
+			if (!!window.clipboardData && !!window.clipboardData.getData) {
+				console.log(window.clipboardData.getData("Text"));
+			} else if (!!event.clipboardData && !!event.clipboardData.getData) {
+				console.log(event.clipboardData.getData("text/plain"));
+			} else {
+				throw new Error("Browser does not support inspection of " + 
+						"clipboard data");
+			}
+		},
 		mouseup = function () {
 			var scr = scroll.call(),
 			    aRect,
@@ -111,8 +164,6 @@ define([
 				range = window.selection.createRange();
 
 				aRect = range.getBoundingClientRect();
-
-				console.log(aRect);
 
 				//queue.push([MOUSEUP, aX, aY, fX, fY]);
 			} else {
@@ -214,6 +265,24 @@ define([
 		
 
 	function Recorder() {
+		var hiddenCss = {
+			position : "absolute",
+			bottom : 0,
+			left : 0,
+			width : "1px",
+			height : "1px",
+			display : "block",
+			fontSize : 1,
+			zIndex : -1,
+			color : "transparent",
+			background : "transparent",
+			overflow : "hidden",
+			padding : 0,
+			resize : "none",
+			outline : "none",
+			WebkitUserSelect : "text",
+			userSelect : "text"
+		};
 
 		window.addEventListener("mousemove", function (event) {
 			if ( !!event.pageX && !!event.pageY ) {
@@ -231,10 +300,27 @@ define([
 
 		window.addEventListener("scroll", scroll, false);
 
+		hiddenInput = document.createElement("input");
+		hiddenInput.value = "";
+		hiddenInput.type = "text";
+
+		hiddenDiv = document.createElement("div");
+		hiddenDiv.contenteditable = "true";
+
+		setStyle(hiddenInput, hiddenCss);
+		setStyle(hiddenDiv, hiddenCss);
+
+		document.body.insertBefore(hiddenInput, 
+				document.body.lastChild.nextSibling);
+		document.body.insertBefore(hiddenDiv, 
+				document.body.lastChild.nextSibling);
+
 		// Create cursor and append to DOM
 		cursor = document.createElement("img");
-		cursor.style.position = "absolute";
-		cursor.style.display = "none";
+		setStyle(cursor, {
+			position : "absolute",
+			display : "none"
+		});
 		cursor.src = "dist/images/cursors/text.png";
 		cursor.className = "cursor";
 		document.body.insertBefore(cursor, document.body.lastChild.nextSibling);
@@ -257,8 +343,44 @@ define([
 
 		cursor.style.display = "none";
 
+		/* MouseEvents */
 		window.addEventListener("click", click, false);
+		// window.addEventListener("dblclick", dblclick, false);
+		// window.addEventListener("contextmenu", contextmenu, false);
 		window.addEventListener("mouseup", mouseup, false);
+
+		// Drag and Drop
+		// window.addEventListener("drag", drag, false);
+		// window.addEventListener("dragstart", dragstart, false);
+		// window.addEventListener("dragend", dragend, false);
+		// window.addEventListener("dragover", dragover, false);
+		// window.addEventListener("dragenter", dragenter, false);
+		// window.addEventListener("dragleave", dragleave, false);
+		// window.addEventListener("drop", drop, false);
+	
+		/* TouchEvents */
+		// window.addEventListener("touchstart", touchstart, false);
+		// window.addEventListener("touchmove", touchmove, false);
+		// window.addEventListener("touchend", touchend, false);
+		// window.addEventListener("touchenter", touchenter, false);
+		// window.addEventListener("touchleave", touchleave, false);
+		// window.addEventListener("touchcancel", touchcancel, false);
+
+		/* KeyEvents */
+		// window.addEventListener("keypress", keypress, false);
+		// window.addEventListener("keydown", keydown, false);
+		// window.addEventListener("keyup", keyup, false);
+		
+		/* HTMLEvents */
+		// window.addEventListener("change", change, false);
+		// window.addEventListener("blur", blur, false);
+		// window.addEventListener("focus", focus, false);
+		// window.addEventListener("resize", resize, false);
+		// window.addEventListener("reset", reset, false);
+		// window.addEventListener("copy", copy, false);
+		// window.addEventListener("cut", cut, false);
+		document.addEventListener("paste", paste, false);
+		// window.addEventListener("submit", submit, false);
 
 		raf = window.requestAnimationFrame(move);
 	};
@@ -275,8 +397,39 @@ define([
 			raf = undefined;
 		}
 
+		/* MouseEvents */
 		window.removeEventListener("click", click, false);
+		// window.removeEventListener("dblclick", dblclick, false);
+		// window.removeEventListener("contextmenu", contextmenu, false);
 		window.removeEventListener("mouseup", click, false);
+
+		// Drag and Drop
+		// window.removeEventListener("drag", drag, false);
+		// window.removeEventListener("dragstart", dragstart, false);
+		// window.removeEventListener("dragend", dragend, false);
+		// window.removeEventListener("dragover", dragover, false);
+		// window.removeEventListener("dragenter", dragenter, false);
+		// window.removeEventListener("dragleave", dragleave, false);
+		// window.removeEventListener("drop", drop, false);
+	
+		/* TouchEvents */
+		// window.removeEventListener("touchstart", touchstart, false);
+		// window.removeEventListener("touchmove", touchmove, false);
+		// window.removeEventListener("touchend", touchend, false);
+		// window.removeEventListener("touchenter", touchenter, false);
+		// window.removeEventListener("touchleave", touchleave, false);
+		// window.removeEventListener("touchcancel", touchcancel, false);
+
+		/* KeyEvents */
+		// window.removeEventListener("keypress", keypress, false);
+		// window.removeEventListener("keydown", keydown, false);
+		// window.removeEventListener("keyup", keyup, false);
+		
+		/* HTMLEvents */
+		// window.removeEventListener("copy", copy, false);
+		// window.removeEventListener("cut", cut, false);
+		document.removeEventListener("beforepaste", paste, false);
+		document.removeEventListener("paste", paste, false);
 	};
 
 	Recorder.prototype.play = function () {

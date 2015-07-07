@@ -13,29 +13,34 @@ define([
 		frame = 0,
 		playing = false,
 	    queue = [],
-		hiddenInput,
-		hiddenDiv,
+//		hiddenInput,
+//		hiddenDiv,
 		cursor,
 	    raf,
 		target,
 		oldTarget,
 		selection,
 		range,
+		style,
 
 		// Constants
+		head = document.head || document.getElementsByTagName("head")[0],
+		body = document.body || document.getElementsByTagName("body")[0],
 		objectPrototype = Object.prototype,
-		number = "Number",
+//		number = "Number",
+		TEXTAREA = "textarea",
+		INPUT = "input",
 		rec = new RecorderEvent(),
-		isIE = (function () {
-			var result = false
-			
-			/* jshint ignore:start */
-			result = new Function("return/*@cc_on!@*/!1")() || 
-			( isNumber(document.documentMode) && document.documentMode <= 10 );
-			/* jshint ignore:end */
-
-			return result;
-		}()),
+//		isIE = (function () {
+//			var result = false;
+//			
+//			/* jshint ignore:start */
+//			result = new Function("return/*@cc_on!@*/!1")() ||
+//	( isNumber(document.documentMode) && document.documentMode <= 10 );
+//			/* jshint ignore:end */
+//
+//			return result;
+//		}()),
 			
 		// Enumerate Events
 		CLICK = 0,
@@ -50,14 +55,14 @@ define([
 			window.scrollTo(queue[frame][3], queue[frame][4]);
 
 			// Get target element, and place cursor below all elements
-			cursor.style.zIndex = -1;
-			target = document.elementFromPoint(
-				queue[frame][1], 
-				queue[frame][2]
-			);
-			cursor.style.zIndex = "auto";
+			setStyle(cursor, {"zIndex" : -1});
+			target = elementFromPoint(queue[frame][1], queue[frame][2]);
+			setStyle(cursor, {"zIndex" : "auto"});
 
 			return target;
+		},
+		elementFromPoint = function (_x, _y) {
+			return document.elementFromPoint(_x, _y);
 		},
 		isDecendant = function (_parent, _child) {
 			var node = _child.parentNode;
@@ -69,10 +74,6 @@ define([
 			}
 			return false;
 		},
-		isNumber = function (_arg) {
-			return typeof _arg === number.toLowerCase() || objectPrototype
-				.toString.call(_arg) === "[object " + number + "]";
-		},
 		setStyle = function (_elem, _props) {
 			var prop;
 			for (prop in _props) {
@@ -81,10 +82,11 @@ define([
 				}
 			}
 		},
-		empty = function(_elem) {
-			while (_elem.hasChildNodes()) {
-				_elem.removeChild(_elem.childNodes[0]);
-			}
+		round = function(_x) {
+			return Math.round(_x);
+		},
+		toLowerCase = function(_string) {
+			return _string.toLowerCase();
 		},
 
 		// Event handlers
@@ -96,8 +98,8 @@ define([
 				sX = window.pageXOffset;
 				sY = window.pageYOffset;
 			} else {
-				sX = docElem.scrollLeft || document.body.scrollLeft;
-				sY = docElem.scrollTop || document.body.scrollTop;
+				sX = docElem.scrollLeft || body.scrollLeft;
+				sY = docElem.scrollTop || body.scrollTop;
 			}
 			return {"x" : sX, "y" : sY};
 		},
@@ -105,28 +107,29 @@ define([
 			queue.push([CLICK, mX, mY, sX, sY]);
 		}, 
 		paste = function (event) {
-			if (isIE) {
-				empty(hiddenDiv);
-				setTimeout(function() {
-					empty(hiddenDiv);
-					hiddenInput.value = " ";
-					hiddenInput.focus().select() = " ";
-				}, 0);
-			} else {
+			var scr = scroll.call(),
+			    rect = document.activeElement.getBoundingClientRect(),
+			    x = round(scr.x + rect.left),
+			    y = round(scr.y + rect.top);
 
-			}
-			void PASTE;
 			if (!!window.clipboardData && !!window.clipboardData.getData) {
-				console.log(window.clipboardData.getData("Text"));
+				queue.push(
+					[PASTE, x, y, window.clipboardData.getData("Text")]
+				);
 			} else if (!!event.clipboardData && !!event.clipboardData.getData) {
-				console.log(event.clipboardData.getData("text/plain"));
+				queue.push(
+					[PASTE, x, y, event.clipboardData.getData("text/plain")]
+				);
 			} else {
 				throw new Error("Browser does not support inspection of " + 
 						"clipboard data");
 			}
 		},
 		mouseup = function () {
-			var scr = scroll.call(),
+			var activeElement = document.activeElement,
+			    anchorNode,
+			    focusNode,
+			    scr = scroll.call(),
 			    aRect,
 			    aX = scr.x,
 			    aY = scr.y,
@@ -140,20 +143,31 @@ define([
 				selection = (window.getSelection || document.getSelection)
 					.call();
 
-				if ( !selection.anchorNode || !selection.focusNode ) {
+				if ( toLowerCase(activeElement.tagName) === TEXTAREA || 
+					 toLowerCase(activeElement.tagName) === INPUT ) {
+					anchorNode = activeElement;
+					focusNode = activeElement;
+					aO = activeElement.selectionStart;
+					fO = activeElement.selectionEnd;
+				} else if ( !!selection.anchorNode && !!selection.focusNode ) {
+					anchorNode = selection.anchorNode.nodeType === 3 ? 
+						selection.anchorNode.parentNode : selection.anchorNode;
+					focusNode = selection.focusNode.nodeType === 3 ? 
+						selection.focusNode.parentNode : selection.focusNode;
+					aO = selection.anchorOffset;
+					fO = selection.focusOffset;
+				} else {
 					return;
 				}
 
-				aRect = selection.anchorNode.parentNode.getBoundingClientRect();
-				fRect = selection.focusNode.parentNode.getBoundingClientRect();
+				aRect = anchorNode.getBoundingClientRect();
+				fRect = focusNode.getBoundingClientRect();
 
-				aX += aRect.left;
-				aY += aRect.top;
-				aO = selection.anchorOffset;
+				aX = round(aX + aRect.left);
+				aY = round(aY + aRect.top);
 
-				fX += fRect.left;
-				fY += fRect.top;
-				fO = selection.focusOffset;
+				fX = round(fX + fRect.left);
+				fY = round(fY + fRect.top);
 
 				if (fO > aO) {
 					queue.push([MOUSEUP, aX, aY, aO, fX, fY, fO]);
@@ -161,6 +175,7 @@ define([
 					queue.push([MOUSEUP, fX, fY, fO, aX, aY, aO]);
 				}
 			} else if ( !!document.selection ) {
+				/* TODO */
 				range = window.selection.createRange();
 
 				aRect = range.getBoundingClientRect();
@@ -175,11 +190,12 @@ define([
 			raf = window.requestAnimationFrame(move);
 		},
 		play = function () {
+			var start, end;
 			if (frame >= queue.length) {
 				frame = 0;
 				playing = false;
-				cursor.style.display = "none";
-				document.body.className = "";
+				setStyle(cursor, {"display" : "none"});
+				head.removeChild(style);
 
 				window.cancelAnimationFrame(raf);
 				target = oldTarget = raf = undefined;
@@ -187,33 +203,55 @@ define([
 			}
 
 			switch (queue[frame][0]) {
+				case PASTE:
+					console.log(queue[frame]);
+					break;
 				case MOUSEUP:
 					if ( !!window.getSelection || !!document.getSelection ) {
-						range = document.createRange();
-						range.setStart(
-							document.elementFromPoint(
-								queue[frame][1], queue[frame][2]
-							).firstChild,
-							queue[frame][3]
+						start = elementFromPoint(
+							queue[frame][1], queue[frame][2]
 						);
-						range.setEnd(
-							document.elementFromPoint(
-								queue[frame][4], queue[frame][5]
-							).firstChild,
-							queue[frame][6]
+						end = elementFromPoint(
+							queue[frame][4], queue[frame][5]
 						);
 
+						if ( (toLowerCase(start.tagName) === TEXTAREA ||
+							 toLowerCase(start.tagName) === INPUT) && 
+							 (toLowerCase(end.tagName) === TEXTAREA ||
+							 toLowerCase(end.tagName) === INPUT) &&
+							 start === end ) {
+							
+							end.selectionStart = queue[frame][3];
+							end.selectionEnd = queue[frame][6];
+							end.focus();
+
+							break;
+						}
+
+						start = start.firstChild;
+						end = end.firstChild;
+
+						range = document.createRange();
+						range.setStart(start, queue[frame][3]);
+						range.setEnd(end, queue[frame][6]);
+
 						selection = (window.getSelection || 
-							document.getSelection).call();
+									 document.getSelection).call();
 						selection.removeAllRanges();
 						selection.addRange(range);
+						
+					} else if ( !!document.selection ) {
+						/* TODO */
+						void(0);
 					}
 					break;
 				case MOUSEMOVE:
 					// Set position of fake cursor
-					cursor.style.left = queue[frame][1] + "px";
-					cursor.style.top = queue[frame][2] + "px";
-					cursor.style.display = "inherit";
+					setStyle(cursor, {
+						"left" : queue[frame][1] + "px",
+						"top" : queue[frame][2] + "px",
+						"display" : "inherit"
+					});
 
 					// Get target that cursor points on
 					target = getTarget();
@@ -228,7 +266,9 @@ define([
 					} else if ( target.nodeType === 3 || 
 						 (target.childNodes.length === 1 && 
 						  target.childNodes[0].nodeType === 3 &&
-						  target.nodeValue !== "") ) {
+						  target.nodeValue !== "" ||
+						  toLowerCase(target.tagName) === TEXTAREA ||
+						  toLowerCase(target.tagName) === INPUT) ) {
 						// TEXT Element
 						cursor.src = "dist/images/cursors/text.png";
 					}
@@ -265,24 +305,14 @@ define([
 		
 
 	function Recorder() {
-		var hiddenCss = {
-			position : "absolute",
-			bottom : 0,
-			left : 0,
-			width : "1px",
-			height : "1px",
-			display : "block",
-			fontSize : 1,
-			zIndex : -1,
-			color : "transparent",
-			background : "transparent",
-			overflow : "hidden",
-			padding : 0,
-			resize : "none",
-			outline : "none",
-			WebkitUserSelect : "text",
-			userSelect : "text"
-		};
+		var cursorCss = "body, body * {" + 
+			"cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg" +
+			"AAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1" +
+			"BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVY" +
+			"dFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAADUlEQ" +
+			"VQYV2P4//8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg=='), " + 
+			"url('dist/images/blank.cur'), none !important;" + 
+			"}";
 
 		window.addEventListener("mousemove", function (event) {
 			if ( !!event.pageX && !!event.pageY ) {
@@ -290,40 +320,35 @@ define([
 				mY = event.pageY;
 			} else {
 				mX = event.clientX + 
-					(docElem.scrollLeft || document.body.scrollLeft) - 
+					(docElem.scrollLeft || body.scrollLeft) - 
 					(docElem.clientLeft || 0);
 				mY = event.clientY + 
-					(docElem.scrollTop || document.body.scrollTop) -
+					(docElem.scrollTop || body.scrollTop) -
 					(docElem.clientTop || 0);
 			}
 		}, false);
 
 		window.addEventListener("scroll", scroll, false);
 
-		hiddenInput = document.createElement("input");
-		hiddenInput.value = "";
-		hiddenInput.type = "text";
-
-		hiddenDiv = document.createElement("div");
-		hiddenDiv.contenteditable = "true";
-
-		setStyle(hiddenInput, hiddenCss);
-		setStyle(hiddenDiv, hiddenCss);
-
-		document.body.insertBefore(hiddenInput, 
-				document.body.lastChild.nextSibling);
-		document.body.insertBefore(hiddenDiv, 
-				document.body.lastChild.nextSibling);
+		style = document.createElement("style");
+		style.type = "text/css";
+		if (style.styleSheet) {
+			style.styleSheet.cssText = cursorCss;
+		} else {
+			style.insertBefore(
+				document.createTextNode(cursorCss), style.lastChild
+			);
+		}
 
 		// Create cursor and append to DOM
 		cursor = document.createElement("img");
 		setStyle(cursor, {
-			position : "absolute",
-			display : "none"
+			"position" : "absolute",
+			"display" : "none"
 		});
 		cursor.src = "dist/images/cursors/text.png";
-		cursor.className = "cursor";
-		document.body.insertBefore(cursor, document.body.lastChild.nextSibling);
+		body.insertBefore(cursor, body.lastChild.nextSibling);
+
 	}
 
 	Recorder.prototype.start = function () {
@@ -341,7 +366,7 @@ define([
 		// Reset array
 		queue.length = 0;
 
-		cursor.style.display = "none";
+		setStyle(cursor, {"display" : "none"});
 
 		/* MouseEvents */
 		window.addEventListener("click", click, false);
@@ -401,7 +426,7 @@ define([
 		window.removeEventListener("click", click, false);
 		// window.removeEventListener("dblclick", dblclick, false);
 		// window.removeEventListener("contextmenu", contextmenu, false);
-		window.removeEventListener("mouseup", click, false);
+		window.removeEventListener("mouseup", mouseup, false);
 
 		// Drag and Drop
 		// window.removeEventListener("drag", drag, false);
@@ -428,7 +453,6 @@ define([
 		/* HTMLEvents */
 		// window.removeEventListener("copy", copy, false);
 		// window.removeEventListener("cut", cut, false);
-		document.removeEventListener("beforepaste", paste, false);
 		document.removeEventListener("paste", paste, false);
 	};
 
@@ -437,17 +461,9 @@ define([
 
 		if ( !raf ) {
 			playing = true;
-			document.body.className = "hide-cursor";
-//		document.body.style.cursor = "none";
-//		document.body.style.cursor = 
-//			"url('data:image/png;base64," + 
-//			"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4" + 
-//			"c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdE" + 
-//			"VYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAADUlEQVQYV2P4/" + 
-//			"/8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg==')," + 
-//			"url('images/blank.cur')," + 
-//			"none !important";
-//			
+
+			head.insertBefore(style, head.lastChild.nextSibling);
+			
 			raf = window.requestAnimationFrame(play);
 		}
 	};
